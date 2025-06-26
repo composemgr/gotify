@@ -1,0 +1,54 @@
+# nginx proxy address - http://172.17.0.1:62084
+
+name: gotify
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: gotify/server:latest
+    container_name: gotify-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: gotify-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    ports:
+      - '172.17.0.1:62084:80'
+    volumes:
+      - './rootfs/data/gotify:/app/data:z'
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://gotify-app:80'
+      - 'cloudflare.hostname=gotify.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.gotify-app.entrypoints=http'
+      - 'traefik.http.routers.gotify-app-secure.tls=true'
+      - 'traefik.http.routers.gotify-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.gotify-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.gotify-app.middlewares=gotify-app-https-redirect'
+      - 'traefik.http.routers.gotify-app-secure.entrypoints=https'
+      - 'traefik.http.routers.gotify-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.gotify-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.gotify-app-secure.service=gotify-app'
+      - 'traefik.http.services.gotify-app.loadbalancer.server.port=80'
+    networks:
+      - gotify
+      - proxy
+      - cloudflare
+
+networks:
+  gotify:
+    name: gotify
+    external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
