@@ -1,0 +1,32 @@
+# nginx proxy address - http://172.17.0.1:62084
+
+name: gotify
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: gotify/server:latest
+    container_name: gotify-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: gotify-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    ports:
+      - '172.17.0.1:62084:80'
+    volumes:
+      - './rootfs/data/gotify:/app/data:z'
+    networks:
+      - gotify
+
+networks:
+  gotify:
+    name: gotify
+    external: false
