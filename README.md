@@ -45,7 +45,7 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/gotify` - Data storage
+- `./volumes/data/gotify` - Data storage
 
 ## 🔍 Logging
 
