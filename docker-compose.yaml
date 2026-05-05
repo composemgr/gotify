@@ -22,7 +22,7 @@ services:
     ports:
       - '172.17.0.1:62084:80'
     volumes:
-      - './rootfs/data/gotify:/app/data:z'
+      - './volumes/data/gotify:/app/data:z'
     networks:
       - gotify
 
