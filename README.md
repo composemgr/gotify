@@ -1,10 +1,10 @@
 ## 👋 Welcome to gotify 🚀
 
-Simple server for sending and receiving push notifications
+The lightweight self-hosted push notification server with Android/iOS clients
 
 ## 📋 Description
 
-Simple server for sending and receiving push notifications
+The lightweight self-hosted push notification server with Android/iOS clients
 
 ## 🚀 Services
 
@@ -21,7 +21,8 @@ curl -q -LSsf "https://raw.githubusercontent.com/composemgr/gotify/main/docker-c
 ```bash
 git clone "https://github.com/composemgr/gotify" ~/.local/srv/docker/gotify
 cd ~/.local/srv/docker/gotify
-docker compose up -d
+cp default.env .env
+docker compose --env-file .env up -d
 ```
 
 ### Option 3: Using composemgr
@@ -35,41 +36,86 @@ composemgr install gotify
 
 ```shell
 TZ=America/New_York
+BASE_HOST_NAME=gotify.example.com
+APP_ADMIN_USER=admin
+APP_ADMIN_PASS=replace-with-a-random-password
 ```
 
 See `docker-compose.yaml` for complete list of configurable options.
 
+### Environment Files
+
+`default.env.sample` holds the full set of variables and is copied to `.env`
+before starting the stack:
+
+```bash
+cp default.env .env
+docker compose --env-file .env up -d
+```
+
+`app.env.sample` holds the app-specific overrides and is copied to `app.env`:
+
+```bash
+cp app.env.sample app.env
+```
+
+`composemgr up` applies `app.env` and `default.env` automatically. Raw
+`docker compose` commands need `--env-file .env` to pick up the same values.
+
+### Reverse Proxy
+
+Three standalone compose files ship in this repo:
+
+| File | Use |
+|------|-----|
+| `docker-compose.yaml` | Default, published on `172.17.0.1:64189` |
+| `docker-compose.traefik.yaml` | Behind an existing external `traefik` network |
+| `docker-compose.tunnel.yaml` | Behind an existing external `cloudflare` tunnel network |
+
+```bash
+docker compose -f docker-compose.traefik.yaml --env-file .env up -d
+```
+
 ## 🌐 Access
 
-- **Web Interface**: http://172.17.0.1:62084
+- **Web Interface**: http://172.17.0.1:64189
 
 ## 📂 Volumes
 
-- `./volumes/data/gotify` - Data storage
+- `./volumes/data/gotify` - SQLite database and application state
+
+## 🔐 Security
+
+- Set `APP_ADMIN_PASS` to a strong random password before the first start
+- Gotify is an unauthenticated-by-default internal tool; always put it behind
+  HTTPS with a reverse proxy (nginx, traefik, caddy)
+- Restrict the admin user to the minimum privileges needed
+- Regularly update Docker images for security patches
+- Backup `./volumes/data/gotify` regularly
 
 ## 🔍 Logging
 
 ```shell
-docker compose logs -f app
+docker compose --env-file .env logs -f app
 ```
 
 ## 🛠️ Management
 
 ```bash
 # Start services
-docker compose up -d
+docker compose --env-file .env up -d
 
 # Stop services
-docker compose down
+docker compose --env-file .env down
 
 # Update to latest images
-docker compose pull && docker compose up -d
+docker compose --env-file .env pull && docker compose --env-file .env up -d
 
 # View logs
-docker compose logs -f
+docker compose --env-file .env logs -f
 
 # Restart services
-docker compose restart
+docker compose --env-file .env restart
 ```
 
 ## 📋 Requirements
